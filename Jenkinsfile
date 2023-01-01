@@ -11,6 +11,7 @@ node {
     
 	
 	try {
+		    sendSlackNotifications("STARTED")
 		    stage('checkOutCode'){
 			git branch: 'development', credentialsId: '70b2989d-2fd0-4d67-b14a-01d0bb721ec9', url: 'https://github.com/devopstrainingnandu/maven-web-application.git'
 		    }
