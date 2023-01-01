@@ -37,6 +37,7 @@ options {
         stage('Build'){
             
             steps{
+	        sendSlackNotifications("STARTED")
                 sh "mvn clean package"
             }
         }
