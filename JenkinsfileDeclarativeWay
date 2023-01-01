@@ -1,0 +1,112 @@
+pipeline{
+    
+    agent any
+    /*
+    agent {
+      label 'label'
+     }
+    */
+    
+    tools {
+          maven 'maven3.8.6'
+        }
+
+/*
+    triggers {
+          pollSCM '* * * * *'
+        }
+*/
+options {
+  buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3')
+  timestamps()
+  }
+
+
+
+    stages{
+        
+        
+        stage('CheckOutCode'){
+            
+            steps{
+                sendSlackNotifications("STARTED")
+                git branch: 'development', credentialsId: '70b2989d-2fd0-4d67-b14a-01d0bb721ec9', url: 'https://github.com/devopstrainingnandu/maven-web-application.git'
+            }
+        }
+        
+        stage('Build'){
+            
+            steps{
+                sh "mvn clean package"
+            }
+        }
+        
+        stage('SonarQubeReport'){
+            
+            steps{
+                sh "mvn clean sonar:sonar"
+            }
+        }
+        
+        stage('UploadArtifactoryToNexus'){
+            
+            steps{
+                sh "mvn clean deploy"
+            }
+        }
+        
+        stage('deployToTomcatServer'){
+            steps{
+                sshagent(['f3b7c344-307f-4350-b4c6-abfabc2e01b8']) {
+				    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.40.19:/opt/apache-tomcat-9.0.70/webapps/"
+				}
+            }
+        }
+        
+    } //stages end
+    
+    
+   post {
+          success {
+            sendSlackNotifications("SUCCESS")
+            sendSlackNotifications(currentBuild.result)
+          }
+          failure {
+            sendSlackNotifications("FAILURE")
+            sendSlackNotifications(currentBuild.result)
+          }
+        }
+
+    
+} //pipeline end
+
+
+
+
+//Slack Send Notifications
+
+def sendSlackNotifications(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESS'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+	def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    colorName = 'ORANGE'
+    colorCode = '#FFA500'
+  } else if (buildStatus == 'SUCCESS') {
+    colorName = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    colorName = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary, channel: '#pipeline_declarativeway')
+}
