@@ -37,7 +37,7 @@ node {
 			slackSend channel: '#pipeline_scriptedway', tokenCredentialId: '914dde1e-72af-414c-ad91-490f07c9d828'
 		    }
 	}
-	except(e){
+	catch(e){
 		currentBuild.result = "FAILED"
 	
 	}
