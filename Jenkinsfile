@@ -1,4 +1,4 @@
-node {
+node('nodes') {
     
     //properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([cron('* * * * *')])])
     properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([githubPush()])])
@@ -19,7 +19,7 @@ node {
 		    stage('Build'){
 			sh "${mavenHome}/bin/mvn clean package"
 		    }
-
+/*
 		    stage('sqReport'){
 			sh "${mavenHome}/bin/mvn sonar:sonar"
 		    }
@@ -37,6 +37,7 @@ node {
 		    stage('SlackNotification'){
 			slackSend channel: '#pipeline_scriptedway', tokenCredentialId: '914dde1e-72af-414c-ad91-490f07c9d828'
 		    }
+*/
 	}
 	catch(e){
 		currentBuild.result = "FAILED"
